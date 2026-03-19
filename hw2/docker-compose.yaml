@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  collector:
+    build:
+      context: .
+      dockerfile: cmd/collector/Dockerfile
+    container_name: github-collector
+    ports:
+      - "50051:50051"
+    networks:
+      - github-network
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: cmd/gateway/Dockerfile
+    container_name: github-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - github-network
+    depends_on:
+      - collector
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_ADDR=collector:50051
+    command: ["./gateway"]
+
+networks:
+  github-network:
+    driver: bridge
