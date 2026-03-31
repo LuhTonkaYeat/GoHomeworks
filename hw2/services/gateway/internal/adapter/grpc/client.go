@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/LuhTonkaYeat/GoHomeworks/hw2/api/proto"
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/gateway/domain"
+	pb "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/api/proto"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/internal/domain"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"

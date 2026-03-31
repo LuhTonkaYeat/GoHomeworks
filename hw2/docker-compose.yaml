@@ -1,8 +1,8 @@
 services:
   collector:
     build:
-      context: .
-      dockerfile: cmd/collector/Dockerfile
+      context: ./services/collector
+      dockerfile: Dockerfile
     container_name: github-collector
     ports:
       - "50051:50051"
@@ -12,8 +12,8 @@ services:
 
   gateway:
     build:
-      context: .
-      dockerfile: cmd/gateway/Dockerfile
+      context: ./services/gateway
+      dockerfile: Dockerfile
     container_name: github-gateway
     ports:
       - "8080:8080"

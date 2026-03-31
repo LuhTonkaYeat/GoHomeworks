@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/gateway/usecase"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/internal/usecase"
 )
 
 type Handler struct {

@@ -4,24 +4,24 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/collector/domain"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/internal/domain"
 )
 
 type RepositoryUseCase interface {
 	GetRepository(ctx context.Context, owner, repo string) (*domain.Repository, error)
 }
 
-type GitHubClient interface {
-	FetchRepository(ctx context.Context, owner, repo string) (*domain.Repository, error)
+type CollectorClient interface {
+	GetRepository(ctx context.Context, owner, repo string) (*domain.Repository, error)
 }
 
 type repositoryUseCase struct {
-	githubClient GitHubClient
+	collectorClient CollectorClient
 }
 
-func NewRepositoryUseCase(githubClient GitHubClient) RepositoryUseCase {
+func NewRepositoryUseCase(collectorClient CollectorClient) RepositoryUseCase {
 	return &repositoryUseCase{
-		githubClient: githubClient,
+		collectorClient: collectorClient,
 	}
 }
 
@@ -30,5 +30,5 @@ func (uc *repositoryUseCase) GetRepository(ctx context.Context, owner, repo stri
 		return nil, fmt.Errorf("owner and repo are required")
 	}
 
-	return uc.githubClient.FetchRepository(ctx, owner, repo)
+	return uc.collectorClient.GetRepository(ctx, owner, repo)
 }

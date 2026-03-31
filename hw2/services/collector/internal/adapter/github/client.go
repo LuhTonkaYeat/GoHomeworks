@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/collector/domain"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/collector/internal/domain"
 )
 
 type Client struct {

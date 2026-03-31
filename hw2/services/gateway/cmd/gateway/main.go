@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/gateway/adapter/grpc"
-	httpHandler "github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/gateway/adapter/http"
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/gateway/usecase"
-
-	_ "github.com/LuhTonkaYeat/GoHomeworks/hw2/docs"
+	_ "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/docs"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/internal/adapter/grpc"
+	httpHandler "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/internal/adapter/http"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/internal/usecase"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/LuhTonkaYeat/GoHomeworks/hw2/api/proto"
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/collector/usecase"
+	pb "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/collector/api/proto"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/collector/internal/usecase"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

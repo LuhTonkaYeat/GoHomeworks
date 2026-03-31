@@ -4,10 +4,10 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/LuhTonkaYeat/GoHomeworks/hw2/api/proto"
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/collector/adapter/github"
-	grpcHandler "github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/collector/adapter/grpc"
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/internal/collector/usecase"
+	pb "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/collector/api/proto"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/collector/internal/adapter/github"
+	grpcHandler "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/collector/internal/adapter/grpc"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/collector/internal/usecase"
 	"google.golang.org/grpc"
 )
 
