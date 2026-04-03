@@ -1,11 +1,12 @@
 syntax = "proto3";
 
-package collector;
+package processor;
 
-option go_package = "github.com/LuhTonkaYeat/GoHomeworks/hw2/api/proto";
+option go_package = "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/processor/api/proto";
 
-service CollectorService {
+service ProcessorService {
     rpc GetRepository(RepoRequest) returns (RepoResponse) {}
+    rpc Ping(PingRequest) returns (PingResponse) {}
 }
 
 message RepoRequest {
@@ -19,4 +20,10 @@ message RepoResponse {
     int32 stars = 3;
     int32 forks = 4;
     string created_at = 5;
+}
+
+message PingRequest {}
+
+message PingResponse {
+    string status = 1;
 }

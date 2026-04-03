@@ -9,23 +9,44 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "email": "support@example.com"
-        },
-        "license": {
-            "name": "MIT",
-            "url": "https://opensource.org/licenses/MIT"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/repo": {
+        "/api/ping": {
             "get": {
-                "description": "Get information about a GitHub repository by owner and repo name",
+                "description": "Ping processor and subscriber services",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Check services status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/http.PingResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/http.PingResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/repositories/info": {
+            "get": {
+                "description": "Get information about a GitHub repository by URL",
                 "consumes": [
                     "application/json"
                 ],
@@ -39,40 +60,33 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Repository owner (username or organization)",
-                        "name": "owner",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Repository name",
-                        "name": "repo",
+                        "description": "GitHub repository URL (e.g., https://github.com/golang/go)",
+                        "name": "url",
                         "in": "query",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved repository information",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/http.RepositoryResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad request - missing parameters",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/http.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Repository not found",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/http.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/http.ErrorResponse"
                         }
@@ -90,6 +104,20 @@ const docTemplate = `{
                 }
             }
         },
+        "http.PingResponse": {
+            "type": "object",
+            "properties": {
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/http.ServiceStatus"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "http.RepositoryResponse": {
             "type": "object",
             "properties": {
@@ -102,11 +130,22 @@ const docTemplate = `{
                 "forks": {
                     "type": "integer"
                 },
-                "name": {
+                "full_name": {
                     "type": "string"
                 },
                 "stars": {
                     "type": "integer"
+                }
+            }
+        },
+        "http.ServiceStatus": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         }
@@ -115,10 +154,10 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "2.0",
 	Host:             "localhost:8080",
 	BasePath:         "/",
-	Schemes:          []string{"http"},
+	Schemes:          []string{},
 	Title:            "GitHub Repository API",
 	Description:      "API for getting information about GitHub repositories",
 	InfoInstanceName: "swagger",

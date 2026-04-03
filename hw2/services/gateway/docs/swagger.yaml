@@ -5,6 +5,15 @@ definitions:
       error:
         type: string
     type: object
+  http.PingResponse:
+    properties:
+      services:
+        items:
+          $ref: '#/definitions/http.ServiceStatus'
+        type: array
+      status:
+        type: string
+    type: object
   http.RepositoryResponse:
     properties:
       created_at:
@@ -13,62 +22,75 @@ definitions:
         type: string
       forks:
         type: integer
-      name:
+      full_name:
         type: string
       stars:
         type: integer
     type: object
+  http.ServiceStatus:
+    properties:
+      name:
+        type: string
+      status:
+        type: string
+    type: object
 host: localhost:8080
 info:
-  contact:
-    email: support@example.com
-    name: API Support
+  contact: {}
   description: API for getting information about GitHub repositories
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-  termsOfService: http://swagger.io/terms/
   title: GitHub Repository API
-  version: "1.0"
+  version: "2.0"
 paths:
-  /repo:
+  /api/ping:
     get:
       consumes:
       - application/json
-      description: Get information about a GitHub repository by owner and repo name
+      description: Ping processor and subscriber services
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.PingResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/http.PingResponse'
+      summary: Check services status
+      tags:
+      - health
+  /api/repositories/info:
+    get:
+      consumes:
+      - application/json
+      description: Get information about a GitHub repository by URL
       parameters:
-      - description: Repository owner (username or organization)
+      - description: GitHub repository URL (e.g., https://github.com/golang/go)
         in: query
-        name: owner
-        required: true
-        type: string
-      - description: Repository name
-        in: query
-        name: repo
+        name: url
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved repository information
+          description: OK
           schema:
             $ref: '#/definitions/http.RepositoryResponse'
         "400":
-          description: Bad request - missing parameters
+          description: Bad Request
           schema:
             $ref: '#/definitions/http.ErrorResponse'
         "404":
-          description: Repository not found
+          description: Not Found
           schema:
             $ref: '#/definitions/http.ErrorResponse'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/http.ErrorResponse'
       summary: Get repository information
       tags:
       - repositories
-schemes:
-- http
 swagger: "2.0"

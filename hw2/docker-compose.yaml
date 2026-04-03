@@ -10,6 +10,21 @@ services:
       - hw2-network
     restart: unless-stopped
 
+  processor:
+    build:
+      context: ./services/processor
+      dockerfile: Dockerfile
+    container_name: github-processor
+    ports:
+      - "50053:50053"
+    environment:
+      - COLLECTOR_ADDR=collector:50051
+    depends_on:
+      - collector
+    networks:
+      - hw2-network
+    restart: unless-stopped
+  
   gateway:
     build:
       context: ./services/gateway

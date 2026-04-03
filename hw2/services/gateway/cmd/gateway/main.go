@@ -13,28 +13,19 @@ import (
 )
 
 // @title GitHub Repository API
-// @version 1.0
+// @version 2.0
 // @description API for getting information about GitHub repositories
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name API Support
-// @contact.email support@example.com
-
-// @license.name MIT
-// @license.url https://opensource.org/licenses/MIT
-
 // @host localhost:8080
 // @BasePath /
 
-// @schemes http
 func main() {
-	collectorAddr := os.Getenv("COLLECTOR_ADDR")
-	if collectorAddr == "" {
-		collectorAddr = "localhost:50051"
-		log.Printf("COLLECTOR_ADDR not set, using default: %s", collectorAddr)
+	processorAddr := os.Getenv("PROCESSOR_ADDR")
+	if processorAddr == "" {
+		processorAddr = "processor:50053"
+		log.Printf("PROCESSOR_ADDR not set, using default: %s", processorAddr)
 	}
 
-	grpcClient, err := grpc.NewClient(collectorAddr)
+	grpcClient, err := grpc.NewClient(processorAddr)
 	if err != nil {
 		log.Fatalf("Failed to create gRPC client: %v", err)
 	}
@@ -45,15 +36,17 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/repo", httpHandler.GetRepository)
+	mux.HandleFunc("/api/repositories/info", httpHandler.GetRepository)
+	mux.HandleFunc("/api/ping", httpHandler.Ping)
 
 	mux.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 
 	port := ":8080"
-	log.Printf("Gateway server is running on port %s", port)
-	log.Printf("Collector address: %s", collectorAddr)
+	log.Printf("Gateway server started on port %s", port)
+	log.Printf("Processor address: %s", processorAddr)
 	log.Printf("Available endpoints:")
-	log.Printf("  GET /repo?owner={owner}&repo={repo} - get repository info")
+	log.Printf("  GET /api/repositories/info?url=<github_url> - get repository info")
+	log.Printf("  GET /api/ping - check services status")
 	log.Printf("  GET /swagger/ - Swagger UI")
 
 	if err := http.ListenAndServe(port, mux); err != nil {
