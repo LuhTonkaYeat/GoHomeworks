@@ -22,7 +22,7 @@ func NewServer(repoUseCase usecase.RepositoryUseCase) *Handler {
 	}
 }
 
-func (h *Handler) GetRepository(ctx context.Context, req *pb.RepoRequest) (*pb.RepoResponse, error) {
+func (h *Handler) GetRepository(ctx context.Context, req *pb.CollectorRepoRequest) (*pb.CollectorRepoResponse, error) {
 	if req.Owner == "" || req.Repo == "" {
 		return nil, status.Error(codes.InvalidArgument, "owner and repo are required")
 	}
@@ -35,7 +35,7 @@ func (h *Handler) GetRepository(ctx context.Context, req *pb.RepoRequest) (*pb.R
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &pb.RepoResponse{
+	return &pb.CollectorRepoResponse{
 		Name:        repo.Name,
 		Description: repo.Description,
 		Stars:       int32(repo.Stars),

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v3.21.12
-// source: api/proto/collector.proto
+// source: collector.proto
 
 package proto
 
@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CollectorServiceClient interface {
-	GetRepository(ctx context.Context, in *RepoRequest, opts ...grpc.CallOption) (*RepoResponse, error)
+	GetRepository(ctx context.Context, in *CollectorRepoRequest, opts ...grpc.CallOption) (*CollectorRepoResponse, error)
 }
 
 type collectorServiceClient struct {
@@ -37,9 +37,9 @@ func NewCollectorServiceClient(cc grpc.ClientConnInterface) CollectorServiceClie
 	return &collectorServiceClient{cc}
 }
 
-func (c *collectorServiceClient) GetRepository(ctx context.Context, in *RepoRequest, opts ...grpc.CallOption) (*RepoResponse, error) {
+func (c *collectorServiceClient) GetRepository(ctx context.Context, in *CollectorRepoRequest, opts ...grpc.CallOption) (*CollectorRepoResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RepoResponse)
+	out := new(CollectorRepoResponse)
 	err := c.cc.Invoke(ctx, CollectorService_GetRepository_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (c *collectorServiceClient) GetRepository(ctx context.Context, in *RepoRequ
 // All implementations must embed UnimplementedCollectorServiceServer
 // for forward compatibility.
 type CollectorServiceServer interface {
-	GetRepository(context.Context, *RepoRequest) (*RepoResponse, error)
+	GetRepository(context.Context, *CollectorRepoRequest) (*CollectorRepoResponse, error)
 	mustEmbedUnimplementedCollectorServiceServer()
 }
 
@@ -62,7 +62,7 @@ type CollectorServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCollectorServiceServer struct{}
 
-func (UnimplementedCollectorServiceServer) GetRepository(context.Context, *RepoRequest) (*RepoResponse, error) {
+func (UnimplementedCollectorServiceServer) GetRepository(context.Context, *CollectorRepoRequest) (*CollectorRepoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetRepository not implemented")
 }
 func (UnimplementedCollectorServiceServer) mustEmbedUnimplementedCollectorServiceServer() {}
@@ -87,7 +87,7 @@ func RegisterCollectorServiceServer(s grpc.ServiceRegistrar, srv CollectorServic
 }
 
 func _CollectorService_GetRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RepoRequest)
+	in := new(CollectorRepoRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func _CollectorService_GetRepository_Handler(srv interface{}, ctx context.Contex
 		FullMethod: CollectorService_GetRepository_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CollectorServiceServer).GetRepository(ctx, req.(*RepoRequest))
+		return srv.(CollectorServiceServer).GetRepository(ctx, req.(*CollectorRepoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -117,5 +117,5 @@ var CollectorService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/proto/collector.proto",
+	Metadata: "collector.proto",
 }

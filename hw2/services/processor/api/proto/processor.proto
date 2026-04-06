@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package processor;
+
+option go_package = "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/processor/api/proto";
+
+service ProcessorService {
+    rpc GetRepository(RepoRequest) returns (RepoResponse) {}
+    rpc Ping(PingRequest) returns (PingResponse) {}
+}
+
+message RepoRequest {
+    string owner = 1;
+    string repo = 2;
+}
+
+message RepoResponse {
+    string name = 1;
+    string description = 2;
+    int32 stars = 3;
+    int32 forks = 4;
+    string created_at = 5;
+}
+
+message PingRequest {}
+
+message PingResponse {
+    string status = 1;
+}

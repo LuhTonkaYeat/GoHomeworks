@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/api/proto"
-	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/gateway/internal/domain"
+	collectorpb "github.com/LuhTonkaYeat/GoHomeworks/hw2/services/processor/api/proto"
+	"github.com/LuhTonkaYeat/GoHomeworks/hw2/services/processor/internal/domain"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,18 +15,18 @@ import (
 
 type Client struct {
 	conn   *grpc.ClientConn
-	client pb.ProcessorServiceClient
+	client collectorpb.CollectorServiceClient
 }
 
 func NewClient(addr string) (*Client, error) {
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to processor: %w", err)
+		return nil, fmt.Errorf("failed to connect to collector: %w", err)
 	}
 
 	return &Client{
 		conn:   conn,
-		client: pb.NewProcessorServiceClient(conn),
+		client: collectorpb.NewCollectorServiceClient(conn),
 	}, nil
 }
 
@@ -38,7 +38,7 @@ func (c *Client) GetRepository(ctx context.Context, owner, repo string) (*domain
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	resp, err := c.client.GetRepository(ctx, &pb.RepoRequest{
+	resp, err := c.client.GetRepository(ctx, &collectorpb.CollectorRepoRequest{
 		Owner: owner,
 		Repo:  repo,
 	})
@@ -51,10 +51,10 @@ func (c *Client) GetRepository(ctx context.Context, owner, repo string) (*domain
 			case codes.InvalidArgument:
 				return nil, fmt.Errorf("invalid request: %s", st.Message())
 			default:
-				return nil, fmt.Errorf("processor error: %s", st.Message())
+				return nil, fmt.Errorf("collector error: %s", st.Message())
 			}
 		}
-		return nil, fmt.Errorf("failed to call processor: %w", err)
+		return nil, fmt.Errorf("failed to call collector: %w", err)
 	}
 
 	createdAt, err := time.Parse(time.RFC3339, resp.CreatedAt)
@@ -69,15 +69,4 @@ func (c *Client) GetRepository(ctx context.Context, owner, repo string) (*domain
 		Forks:       int(resp.Forks),
 		CreatedAt:   createdAt,
 	}, nil
-}
-
-func (c *Client) Ping(ctx context.Context) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	resp, err := c.client.Ping(ctx, &pb.PingRequest{})
-	if err != nil {
-		return "down", err
-	}
-	return resp.Status, nil
 }
