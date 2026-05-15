@@ -1,4 +1,5 @@
 services:
+  # ==================== PostgreSQL для Subscribe ====================
   postgres:
     image: postgres:15-alpine
     container_name: github-postgres
@@ -9,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - hw2-network
+      - hw5-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,6 +20,75 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # ==================== PostgreSQL для Processor (кэш) ====================
+  postgres-processor:
+    image: postgres:15-alpine
+    container_name: github-postgres-processor
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: processor
+    ports:
+      - "5433:5432"
+    networks:
+      - hw5-network
+    volumes:
+      - postgres_processor_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== Zookeeper (для Kafka) ====================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: github-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - hw5-network
+    restart: unless-stopped
+
+  # ==================== Kafka ====================
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: github-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - hw5-network
+    restart: unless-stopped
+
+  # ==================== Kafdrop (UI для Kafka) ====================
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: github-kafdrop
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERCONNECT: kafka:9092
+      JVM_OPTS: "-Xms16M -Xmx48M"
+    ports:
+      - "9000:9000"
+    networks:
+      - hw5-network
+    restart: unless-stopped
+
+  # ==================== Subscribe Service ====================
   subscribe:
     build:
       context: ./services/subscribe
@@ -33,9 +103,10 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - hw2-network
+      - hw5-network
     restart: unless-stopped
 
+  # ==================== Collector Service ====================
   collector:
     build:
       context: ./services/collector
@@ -45,13 +116,17 @@ services:
       - "50051:50051"
     environment:
       - SUBSCRIBE_ADDR=subscribe:50053
-      - PORT=50051
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_REQUESTS_TOPIC=repository.fetch.requests
+      - KAFKA_RESPONSES_TOPIC=repository.fetch.responses
     depends_on:
       - subscribe
+      - kafka
     networks:
-      - hw2-network
+      - hw5-network
     restart: unless-stopped
 
+  # ==================== Processor Service ====================
   processor:
     build:
       context: ./services/processor
@@ -60,14 +135,21 @@ services:
     ports:
       - "50052:50052"
     environment:
-      - COLLECTOR_ADDR=collector:50051
+      - COLLECTOR_ADDR=collector:50051  # временно, для обратной совместимости
+      - PROCESSOR_DATABASE_URL=postgres://postgres:postgres@postgres-processor:5432/processor?sslmode=disable
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_REQUESTS_TOPIC=repository.fetch.requests
+      - KAFKA_RESPONSES_TOPIC=repository.fetch.responses
       - PORT=50052
     depends_on:
       - collector
+      - postgres-processor
+      - kafka
     networks:
-      - hw2-network
+      - hw5-network
     restart: unless-stopped
   
+  # ==================== Gateway Service ====================
   gateway:
     build:
       context: ./services/gateway
@@ -82,12 +164,13 @@ services:
       - processor
       - subscribe
     networks:
-      - hw2-network
+      - hw5-network
     restart: unless-stopped
 
 networks:
-  hw2-network:
+  hw5-network:
     driver: bridge
 
 volumes:
   postgres_data:
+  postgres_processor_data:
