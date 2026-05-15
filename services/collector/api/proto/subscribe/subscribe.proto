@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package subscribe;
+
+option go_package = "github.com/LuhTonkaYeat/GoHomeworks/services/services/collector/api/proto/subscribe";
+
+service SubscribeService {
+    rpc GetSubscriptions(Empty) returns (SubscriptionsList) {}
+}
+
+message Empty {}
+
+message SubscriptionsList {
+    repeated Repository subscriptions = 1;
+}
+
+message Repository {
+    string owner = 1;
+    string name = 2;
+}
