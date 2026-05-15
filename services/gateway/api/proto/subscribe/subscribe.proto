@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package subscribe;
+
+option go_package = "github.com/LuhTonkaYeat/GoHomeworks/services/subscribe/api/proto";
+
+service SubscribeService {
+    rpc CreateSubscription(CreateSubscriptionRequest) returns (SubscriptionResponse);
+    rpc DeleteSubscription(DeleteSubscriptionRequest) returns (Empty);
+    rpc GetSubscriptions(Empty) returns (SubscriptionsList);
+    rpc CheckRepositoryExists(CheckRepoRequest) returns (CheckRepoResponse);
+}
+
+message CreateSubscriptionRequest {
+    string owner = 1;
+    string repo = 2;
+    string user_id = 3;
+}
+
+message DeleteSubscriptionRequest {
+    string owner = 1;
+    string repo = 2;
+    string user_id = 3;
+}
+
+message SubscriptionResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message Empty {}
+
+message SubscriptionsList {
+    repeated Repository subscriptions = 1;
+}
+
+message Repository {
+    string owner = 1;
+    string name = 2;
+}
+
+message CheckRepoRequest {
+    string owner = 1;
+    string repo = 2;
+}
+
+message CheckRepoResponse {
+    bool exists = 1;
+}

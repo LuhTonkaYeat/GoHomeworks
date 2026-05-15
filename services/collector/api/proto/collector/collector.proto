@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package collector;
+
+option go_package = "github.com/LuhTonkaYeat/GoHomeworks/services/services/collector/api/proto";
+
+service CollectorService {
+    rpc GetRepository(CollectorRepoRequest) returns (CollectorRepoResponse) {}
+    rpc GetSubscriptionsInfo(Empty) returns (SubscriptionsInfoResponse) {}
+}
+
+message CollectorRepoRequest {
+    string owner = 1;
+    string repo = 2;
+}
+
+message CollectorRepoResponse {
+    string name = 1;
+    string description = 2;
+    int32 stars = 3;
+    int32 forks = 4;
+    string created_at = 5;
+}
+
+message Empty {}
+
+message SubscriptionsInfoResponse {
+    repeated CollectorRepoResponse repositories = 1;
+}
