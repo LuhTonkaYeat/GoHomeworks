@@ -46,3 +46,23 @@ func (h *Handler) GetRepository(ctx context.Context, req *pb.RepoRequest) (*pb.R
 func (h *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	return &pb.PingResponse{Status: "up"}, nil
 }
+
+func (h *Handler) GetSubscriptionsInfo(ctx context.Context, req *pb.Empty) (*pb.SubscriptionsInfoResponse, error) {
+	repos, err := h.repoUseCase.GetSubscriptionsInfo(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	
+	var responses []*pb.RepoResponse
+	for _, repo := range repos {
+		responses = append(responses, &pb.RepoResponse{
+			Name:        repo.Name,
+			Description: repo.Description,
+			Stars:       int32(repo.Stars),
+			Forks:       int32(repo.Forks),
+			CreatedAt:   repo.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		})
+	}
+	
+	return &pb.SubscriptionsInfoResponse{Repositories: responses}, nil
+}

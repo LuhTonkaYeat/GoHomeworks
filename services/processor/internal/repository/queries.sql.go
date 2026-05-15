@@ -12,33 +12,22 @@ import (
 )
 
 const getAllRepositories = `-- name: GetAllRepositories :many
-SELECT owner, repo, full_name, description, stars, forks, created_at, updated_at, last_fetched_at
+SELECT id, owner, repo, full_name, description, stars, forks, created_at, updated_at, last_fetched_at
 FROM repositories
-ORDER BY id
+ORDER BY owner, repo
 `
 
-type GetAllRepositoriesRow struct {
-	Owner         string
-	Repo          string
-	FullName      string
-	Description   pgtype.Text
-	Stars         int32
-	Forks         int32
-	CreatedAt     pgtype.Timestamp
-	UpdatedAt     pgtype.Timestamp
-	LastFetchedAt pgtype.Timestamp
-}
-
-func (q *Queries) GetAllRepositories(ctx context.Context) ([]GetAllRepositoriesRow, error) {
+func (q *Queries) GetAllRepositories(ctx context.Context) ([]Repository, error) {
 	rows, err := q.db.Query(ctx, getAllRepositories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAllRepositoriesRow
+	var items []Repository
 	for rows.Next() {
-		var i GetAllRepositoriesRow
+		var i Repository
 		if err := rows.Scan(
+			&i.ID,
 			&i.Owner,
 			&i.Repo,
 			&i.FullName,

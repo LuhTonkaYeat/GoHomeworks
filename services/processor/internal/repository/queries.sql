@@ -17,6 +17,6 @@ DO UPDATE SET
     last_fetched_at = NOW();
 
 -- name: GetAllRepositories :many
-SELECT owner, repo, full_name, description, stars, forks, created_at, updated_at, last_fetched_at
+SELECT id, owner, repo, full_name, description, stars, forks, created_at, updated_at, last_fetched_at
 FROM repositories
-ORDER BY id;
+ORDER BY owner, repo;

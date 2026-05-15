@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/LuhTonkaYeat/GoHomeworks/services/collector/internal/adapter/github"
 	"github.com/LuhTonkaYeat/GoHomeworks/services/collector/internal/adapter/kafka"
@@ -31,7 +30,7 @@ func main() {
 	
 	kafkaBrokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
 	if len(kafkaBrokers) == 0 || kafkaBrokers[0] == "" {
-		kafkaBrokers = []string{"localhost:9092"}
+		kafkaBrokers = []string{"kafka:9092"}
 	}
 	
 	requestsTopic := os.Getenv("KAFKA_REQUESTS_TOPIC")
@@ -50,6 +49,7 @@ func main() {
 	collectorUseCase := usecase.NewCollectorUseCase(githubClient, subscribeClient, kafkaProducer)
 	
 	kafkaConsumer := kafka.NewConsumer(kafkaBrokers, requestsTopic, "collector-group", func(request kafka.RepositoryFetchRequest) error {
+		log.Printf("Received request: %+v", request)
 		return collectorUseCase.ProcessFetchRequest(context.Background(), request)
 	})
 	
@@ -58,22 +58,6 @@ func main() {
 	
 	kafkaConsumer.Start(ctx)
 	defer kafkaConsumer.Close()
-	
-	ticker := time.NewTicker(15 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("Stopping refresh timer...")
-				return
-			case <-ticker.C:
-				log.Println("Timer triggered: refreshing subscriptions...")
-				if err := collectorUseCase.RefreshSubscriptions(context.Background()); err != nil {
-					log.Printf("Error refreshing subscriptions: %v", err)
-				}
-			}
-		}
-	}()
 	
 	log.Println("Collector service started")
 	log.Printf("Subscribe address: %s", subscribeAddr)
@@ -87,6 +71,5 @@ func main() {
 	<-sigChan
 	
 	log.Println("Shutting down...")
-	ticker.Stop()
 	cancel()
 }

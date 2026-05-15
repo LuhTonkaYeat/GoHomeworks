@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/LuhTonkaYeat/GoHomeworks/services/processor/internal/adapter/kafka"
 	"github.com/LuhTonkaYeat/GoHomeworks/services/processor/internal/domain"
 	"github.com/LuhTonkaYeat/GoHomeworks/services/processor/internal/repository"
@@ -14,6 +15,7 @@ import (
 
 type RepositoryUseCase interface {
 	GetRepository(ctx context.Context, owner, repo string) (*domain.Repository, error)
+	GetSubscriptionsInfo(ctx context.Context) ([]*domain.Repository, error)
 	HandleKafkaResponse(response kafka.RepositoryFetchResponse) error
 }
 
@@ -43,12 +45,18 @@ func (uc *repositoryUseCase) GetRepository(ctx context.Context, owner, repo stri
 
 	if err == nil {
 		log.Printf("Cache HIT for %s/%s", owner, repo)
+		
+		description := ""
+		if dbRepo.Description.Valid {
+			description = dbRepo.Description.String
+		}
+		
 		return &domain.Repository{
 			Name:        dbRepo.FullName,
-			Description: dbRepo.Description,
+			Description: description,
 			Stars:       int(dbRepo.Stars),
 			Forks:       int(dbRepo.Forks),
-			CreatedAt:   dbRepo.CreatedAt,
+			CreatedAt:   dbRepo.CreatedAt.Time,
 		}, nil
 	}
 
@@ -62,6 +70,30 @@ func (uc *repositoryUseCase) GetRepository(ctx context.Context, owner, repo stri
 	}
 
 	return nil, &NotFoundError{owner: owner, repo: repo}
+}
+
+func (uc *repositoryUseCase) GetSubscriptionsInfo(ctx context.Context) ([]*domain.Repository, error) {
+	repos, err := uc.dbRepo.GetAllRepositories(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*domain.Repository
+	for _, repo := range repos {
+		description := ""
+		if repo.Description.Valid {
+			description = repo.Description.String
+		}
+		result = append(result, &domain.Repository{
+			Name:        repo.FullName,
+			Description: description,
+			Stars:       int(repo.Stars),
+			Forks:       int(repo.Forks),
+			CreatedAt:   repo.CreatedAt.Time,
+		})
+	}
+
+	return result, nil
 }
 
 func (uc *repositoryUseCase) HandleKafkaResponse(response kafka.RepositoryFetchResponse) error {
@@ -78,14 +110,24 @@ func (uc *repositoryUseCase) HandleKafkaResponse(response kafka.RepositoryFetchR
 		return err
 	}
 
+	description := pgtype.Text{
+		String: response.Description,
+		Valid:  response.Description != "",
+	}
+
+	createdAtPg := pgtype.Timestamp{
+		Time:  createdAt,
+		Valid: true,
+	}
+
 	err = uc.dbRepo.UpsertRepository(ctx, repository.UpsertRepositoryParams{
 		Owner:       response.Owner,
 		Repo:        response.Repo,
 		FullName:    response.FullName,
-		Description: response.Description,
+		Description: description,
 		Stars:       int32(response.Stars),
 		Forks:       int32(response.Forks),
-		CreatedAt:   createdAt,
+		CreatedAt:   createdAtPg,
 	})
 
 	if err != nil {
