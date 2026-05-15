@@ -22,9 +22,9 @@ type GitHubClient interface {
 }
 
 type repositoryUseCase struct {
-	dbRepo          *repository.Queries
-	kafkaProducer   *kafka.Producer
-	githubClient    GitHubClient
+	dbRepo        *repository.Queries
+	kafkaProducer *kafka.Producer
+	githubClient  GitHubClient
 }
 
 func NewRepositoryUseCase(dbRepo *repository.Queries, kafkaProducer *kafka.Producer, githubClient GitHubClient) RepositoryUseCase {
@@ -40,9 +40,9 @@ func (uc *repositoryUseCase) GetRepository(ctx context.Context, owner, repo stri
 		Owner: owner,
 		Repo:  repo,
 	})
-	
+
 	if err == nil {
-		log.Printf("Cache hit for %s/%s", owner, repo)
+		log.Printf("Cache HIT for %s/%s", owner, repo)
 		return &domain.Repository{
 			Name:        dbRepo.FullName,
 			Description: dbRepo.Description,
@@ -51,22 +51,27 @@ func (uc *repositoryUseCase) GetRepository(ctx context.Context, owner, repo stri
 			CreatedAt:   dbRepo.CreatedAt,
 		}, nil
 	}
-	
-	log.Printf("Cache miss for %s/%s, sending to Kafka", owner, repo)
-	
+
+	log.Printf("Cache MISS for %s/%s, sending to Kafka", owner, repo)
+
 	requestID := generateRequestID()
 	err = uc.kafkaProducer.SendFetchRequest(ctx, requestID, owner, repo)
 	if err != nil {
 		log.Printf("Failed to send Kafka request: %v", err)
 		return uc.githubClient.FetchRepository(ctx, owner, repo)
 	}
-	
-	return nil, ErrNotFoundInCache
+
+	return nil, &NotFoundError{owner: owner, repo: repo}
 }
 
 func (uc *repositoryUseCase) HandleKafkaResponse(response kafka.RepositoryFetchResponse) error {
 	ctx := context.Background()
-	
+
+	if response.Error != "" {
+		log.Printf("Error from Collector for %s/%s: %s", response.Owner, response.Repo, response.Error)
+		return nil
+	}
+
 	createdAt, err := time.Parse(time.RFC3339, response.CreatedAt)
 	if err != nil {
 		log.Printf("Failed to parse created_at: %v", err)
@@ -82,22 +87,23 @@ func (uc *repositoryUseCase) HandleKafkaResponse(response kafka.RepositoryFetchR
 		Forks:       int32(response.Forks),
 		CreatedAt:   createdAt,
 	})
-	
+
 	if err != nil {
 		log.Printf("Failed to upsert repository: %v", err)
 		return err
 	}
-	
+
 	log.Printf("Saved repository %s/%s to DB", response.Owner, response.Repo)
 	return nil
 }
 
-var ErrNotFoundInCache = &NotFoundError{}
-
-type NotFoundError struct{}
+type NotFoundError struct {
+	owner string
+	repo  string
+}
 
 func (e *NotFoundError) Error() string {
-	return "repository not found in cache, request sent to Kafka"
+	return "repository " + e.owner + "/" + e.repo + " not found in cache, request sent to Kafka"
 }
 
 func generateRequestID() string {
